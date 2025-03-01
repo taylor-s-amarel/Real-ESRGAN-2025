@@ -4,7 +4,20 @@ from torch.nn import functional as F
 from PIL import Image
 import numpy as np
 import cv2
-from huggingface_hub import hf_hub_url, cached_download
+from huggingface_hub import hf_hub_url
+# Compatibility layer for different huggingface_hub versions
+try:
+    from huggingface_hub import cached_download
+except ImportError:
+    # For newer versions that removed cached_download
+    from huggingface_hub import hf_hub_download
+    def cached_download(*args, **kwargs):
+        # Adapt parameters to match the new function
+        if 'cache_dir' in kwargs:
+            kwargs['local_dir'] = kwargs.pop('cache_dir')
+        if 'force_download' in kwargs and 'force_download' not in inspect.signature(hf_hub_download).parameters:
+            kwargs.pop('force_download')
+        return hf_hub_download(*args, **kwargs)
 
 from .rrdbnet_arch import RRDBNet
 from .utils import pad_reflect, split_image_into_overlapping_patches, stich_together, \
